@@ -1,0 +1,38 @@
+﻿
+#ignore thumbnails created by windows
+Thumbs.db
+#Ignore files build by Visual Studio
+*.user
+*.vspscc
+*.suo
+*.bak
+[Bb]in
+[Dd]ebug*/
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+package/
+/packages/
+*.nupkg
+.idea/
+
+*副本*.cs*
+/JZBPM.Web/logs
+
+#Ignore files build by Visual Studio 2015
+/.vs
+
+/JZBPM.WebAPI/apidoc
+/JZBPM.WebAPI/logs
+/JZBPM.WebAPI.Docs/apidoc
+/JZBPM.WebAPI.Docs/_book
+/JZBPM.WebAPI.Docs/node_modules
+/JZBPM.WebAPI.Host/logs
+PublishProfiles/
+/JZBPM.IdentityServer/log
+/IdentityServer
+/JZBPM.Scheduler/logs
+/JZBPM.Scheduler/log
+/JZBPM.Web/log
+/JZBPM.Web/wwwroot

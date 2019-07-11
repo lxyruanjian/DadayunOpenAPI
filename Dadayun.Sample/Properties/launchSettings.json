@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Dadayun.Sample": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
