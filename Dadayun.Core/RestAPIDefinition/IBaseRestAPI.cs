@@ -10,6 +10,6 @@ namespace Dadayun.Core
     public interface IBaseRestAPI
     {
         [Get("/v1/date")]
-        Task<DateTime> GetDateAsync();
+        Task<DateTime> GetDateAsync([Header("Authorization")] string accessToken);
     }
 }

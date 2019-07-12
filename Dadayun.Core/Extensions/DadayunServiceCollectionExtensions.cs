@@ -13,31 +13,41 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class DadayunServiceCollectionExtensions
     {
-        public static IServiceCollection AddDadayunClient(this IServiceCollection services, string endPoint, RefitSettings settings = null)
+        public static IServiceCollection AddDadayunClient(this IServiceCollection services, string endPoint, RefitSettings refitSettings = null)
         {
-            services.AddRefitClient<IBaseRestAPI>(settings)
-                .ConfigureHttpClient(c => c.BaseAddress = new Uri(endPoint))
-                .AddHttpMessageHandler(provider => GetDDYSignDelegatingHandler(provider));
+            if (string.IsNullOrWhiteSpace(endPoint)) throw new ArgumentNullException(nameof(endPoint));
 
-            services.AddRefitClient<IFormRestAPI>(settings)
-                .ConfigureHttpClient(c => c.BaseAddress = new Uri(endPoint))
-                .AddHttpMessageHandler(provider => GetDDYSignDelegatingHandler(provider));
+            var settings = refitSettings ?? new RefitSettings();
+
+            services.addDadayunRestAPI<IBaseRestAPI>(endPoint, settings);
+            services.addDadayunRestAPI<IFormRestAPI>(endPoint, settings);
 
             services.AddTransient<IBaseAPI, DefaultBaseAPI>();
             services.AddTransient<IFormAPI, DefaultFormAPI>();
+            services.AddSingleton<ITokenService, DefaultTokenService>();
 
             return services;
         }
 
-        public static DelegatingHandler GetDDYSignDelegatingHandler(IServiceProvider provider)
+        private static void addDadayunRestAPI<T>(this IServiceCollection services, string endPoint, RefitSettings settings = null) where T : class
+        {
+            services.AddRefitClient<T>(settings)
+                .ConfigureHttpClient(c => c.BaseAddress = new Uri(endPoint))
+                .AddHttpMessageHandler(provider => GetDDYDelegatingHandler(provider));
+        }
+
+        public static DelegatingHandler GetDDYDelegatingHandler(IServiceProvider provider)
         {
             var innerHandler = new AuthenticatedHttpClientHandler(httpRequestMessage =>
                 {
                     AddRequiredHeaders(httpRequestMessage);
 
-                    var signer = new DDYSigner();
                     var options = provider.GetService<IOptions<DadayunClientOptions>>().Value;
-                    signer.Sign(httpRequestMessage, options.AccessKeyId, options.AccessSecret);
+                    if (options != null && !string.IsNullOrWhiteSpace(options.AccessKeyId) && !string.IsNullOrWhiteSpace(options.AccessSecret))
+                    {
+                        var signer = new DDYSigner();
+                        signer.Sign(httpRequestMessage, options.AccessKeyId, options.AccessSecret);
+                    }
                     return Task.CompletedTask;
                 });
 
@@ -59,7 +69,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (!request.Headers.Contains(HttpHeader.HostHeader))
             {
-                Uri requestEndpoint = request.RequestUri;
+                var requestEndpoint = request.RequestUri;
                 var hostHeader = requestEndpoint.Host;
                 if (!requestEndpoint.IsDefaultPort)
                     hostHeader += ":" + requestEndpoint.Port;

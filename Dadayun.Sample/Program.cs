@@ -44,6 +44,7 @@ namespace Dadayun.Sample
                     services.AddOptions();
 
                     services.Configure<DadayunClientOptions>(hostContext.Configuration.GetSection("DadayunClientOptions"));
+                    services.Configure<TokenOptions>(hostContext.Configuration.GetSection("DadayunClientOptions:TokenOptions"));
                     services.AddDadayunClient(hostContext.Configuration.GetValue<string>("DadayunClientOptions:EndPoint"));
 
                     services.AddTransient<BaseSample>();

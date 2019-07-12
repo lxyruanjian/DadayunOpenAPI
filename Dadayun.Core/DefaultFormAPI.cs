@@ -1,7 +1,4 @@
-﻿using Dadayun.Core.Auth;
-using Dadayun.Core.Exceptions;
-using Dadayun.Core.Handlers;
-using Dadayun.Core.RequestDto;
+﻿using Dadayun.Core.RequestDto;
 using Dadayun.Core.ResponseDto;
 using Dadayun.Core.Util;
 using Newtonsoft.Json;
@@ -21,9 +18,11 @@ namespace Dadayun.Core
     public class DefaultFormAPI : IFormAPI
     {
         private IFormRestAPI formRestAPI;
-        public DefaultFormAPI(IFormRestAPI formRestAPI)
+        private readonly ITokenService tokenService;
+        public DefaultFormAPI(IFormRestAPI formRestAPI, ITokenService tokenService)
         {
             this.formRestAPI = formRestAPI;
+            this.tokenService = tokenService;
         }
 
         //private void buildFormAPI()
@@ -66,15 +65,15 @@ namespace Dadayun.Core
                     var fieldsStr = fields != null && fields.Count() > 0 ? string.Join(",", fields) : null;
                     var filterStr = filter != null && filter.Count() > 0 ? JsonConvert.SerializeObject(filter.ToQueryConditionRequests()) : null;
 
-                    var httpResponseMessage = await formRestAPI.GetFormInstancesAsync(idOrName, fieldsStr, filterStr, start, limit, sortField, keyOption.ToString(), count).ConfigureAwait(false);
+                    var httpResponseMessage = await formRestAPI.GetFormInstancesAsync(token, idOrName, fieldsStr, filterStr, start, limit, sortField, keyOption.ToString(), count).ConfigureAwait(false);
 
                     return await generateSetResult<T>(start, limit, count, httpResponseMessage);
-                },null);
+                }, tokenService.AccessTokenGetter);
         }
 
         public Task<T> GetFormInstanceAsync<T>(string idOrName, Guid instanceId, FormKeyOption keyOption = FormKeyOption.Entity, bool containsAuthority = false)
         {
-            return ApiHandlerWapper.TryCommonApiAsync(token => formRestAPI.GetFormInstanceAsync<T>(idOrName, instanceId, keyOption.ToString(), containsAuthority));
+            return ApiHandlerWapper.TryCommonApiAsync(token => formRestAPI.GetFormInstanceAsync<T>(token, idOrName, instanceId, keyOption.ToString(), containsAuthority), tokenService.AccessTokenGetter);
         }
 
         public Task<T> AddFormInstanceAsync<T>(string idOrName, object newInstance, FormKeyOption keyOption = FormKeyOption.Entity, bool containsAuthority = true)
@@ -82,7 +81,7 @@ namespace Dadayun.Core
             var postData = new Dictionary<string, string>();
             postData.Add("jsonFormData", JsonConvert.SerializeObject(newInstance));
             postData.Add("keyOption", keyOption.ToString());
-            return ApiHandlerWapper.TryCommonApiAsync(token => formRestAPI.AddFormInstanceAsync<T>(idOrName, postData, containsAuthority));
+            return ApiHandlerWapper.TryCommonApiAsync(token => formRestAPI.AddFormInstanceAsync<T>(token, idOrName, postData, containsAuthority), tokenService.AccessTokenGetter);
         }
 
         private static async Task<SetResult<T>> generateSetResult<T>(int start, int limit, bool count, HttpResponseMessage httpResponseMessage)
